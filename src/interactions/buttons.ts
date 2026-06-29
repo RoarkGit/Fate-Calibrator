@@ -53,7 +53,7 @@ export async function handleInteraction(interaction: Interaction): Promise<void>
   const isNav = !isSetTz && !isTz && interaction.customId.startsWith('nav:');
   if (!isNav && !isTz && !isSetTz) return;
 
-  const prefixLen = isSetTz ? 'set_tz:'.length : 4;
+  const prefixLen = isSetTz ? 'set_tz:'.length : isTz ? 'tz:'.length : 'nav:'.length;
   const targetKey = interaction.customId.slice(prefixLen);
   const [yearStr, monthStr] = targetKey.split('-');
   const year = parseInt(yearStr, 10);
