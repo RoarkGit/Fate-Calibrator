@@ -1,4 +1,5 @@
 import Database from 'better-sqlite3';
+import fs from 'fs';
 import path from 'path';
 import type { CalendarEvent, EventType, StorableEvent } from '../types';
 
@@ -24,6 +25,8 @@ interface TimezoneRow {
 }
 
 export function initDb(): void {
+  fs.mkdirSync(DATA_DIR, { recursive: true });
+  console.log(`Database path: ${DB_PATH}`);
   db = new Database(DB_PATH);
 
   db.exec(`
