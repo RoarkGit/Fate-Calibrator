@@ -181,8 +181,11 @@ async function ensurePinnedMessage(client: Client): Promise<void> {
   // isSendable() narrows to channels that have send() (excludes PartialGroupDMChannel)
   if (!channel?.isSendable()) throw new Error('CALENDAR_CHANNEL_ID is not a sendable channel');
 
-  const pins = (await channel.messages.fetchPins()) as unknown as Collection<string, Message>;
-  const existing = pins.find((m) => m.author.id === client.user?.id);
+  const pinsRaw = await channel.messages.fetchPins();
+  const pinsArr: Message[] = Array.isArray(pinsRaw)
+    ? (pinsRaw as Message[])
+    : Object.values(pinsRaw as unknown as Record<string, Message>);
+  const existing = pinsArr.find((m) => m.author.id === client.user?.id);
 
   await cleanupChannel(channel, client.user?.id ?? '', existing?.id ?? null);
 
