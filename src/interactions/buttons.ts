@@ -105,13 +105,17 @@ async function handleTzSelect(interaction: StringSelectMenuInteraction): Promise
 
   let buffer = get(key, selectedTz);
   if (!buffer) {
+    await interaction.editReply({
+      content: 'Generating calendar...',
+      files: [],
+      components: buildNavComponents(year, month + 1, 'user'),
+    }).catch(() => {});
     const rawEvents = await fetchAllEvents(interaction.client);
     const rangeEnd = new Date(year, month + 1, 0, 23, 59, 59);
     const events = expandAllEvents(rawEvents, rangeEnd);
     buffer = renderMonth(year, month, events, selectedTz);
   }
 
-  // Dropdown dismissed after selection
   await interaction.editReply({
     content: '',
     files: [new AttachmentBuilder(buffer, { name: 'calendar.png' })],
