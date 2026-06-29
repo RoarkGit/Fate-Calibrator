@@ -1,0 +1,17 @@
+# Local dev/test only - on Unraid, configure the container through the Docker UI.
+# Image is published to ghcr.io/<your-github-username>/fate-calibrator:latest
+# by the GitHub Actions workflow on every push to main.
+
+services:
+  fate-calibrator:
+    image: ghcr.io/${GITHUB_USER}/fate-calibrator:latest
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      - DATA_DIR=/app/data
+    volumes:
+      - fate-calibrator-data:/app/data
+
+volumes:
+  fate-calibrator-data:

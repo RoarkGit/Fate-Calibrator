@@ -1,0 +1,31 @@
+{
+  "name": "fate-calibrator",
+  "version": "1.0.0",
+  "description": "Discord raid calendar bot powered by Guild Scheduled Events",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "tsx src/index.ts",
+    "lint": "eslint src",
+    "format": "prettier --write src"
+  },
+  "dependencies": {
+    "@napi-rs/canvas": "^0.1.44",
+    "better-sqlite3": "^11.0.0",
+    "discord.js": "^14.14.1",
+    "dotenv": "^16.4.5",
+    "node-cron": "^3.0.3"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.12",
+    "@types/node": "^22.0.0",
+    "@types/node-cron": "^3.0.11",
+    "eslint": "^9.0.0",
+    "eslint-config-prettier": "^9.1.0",
+    "prettier": "^3.4.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0",
+    "typescript-eslint": "^8.0.0"
+  }
+}

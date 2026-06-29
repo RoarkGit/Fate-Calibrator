@@ -1,0 +1,8 @@
+node_modules/
+dist/
+.env
+*.db
+.git/
+*.log
+raid-calendar-bot-plan.md
+deploy-commands.js
