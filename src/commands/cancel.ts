@@ -4,7 +4,7 @@ import {
   type ChatInputCommandInteraction,
 } from 'discord.js';
 import { storeCancelledEvent } from '../db/timezones';
-import { fetchAllEvents, expandEvent, getLocalDateParts } from '../calendar/events';
+import { fetchAllEvents, expandEvent, getLocalDateParts, invalidateEventCache } from '../calendar/events';
 import { rebuildCache, getCurrentMonthPayload } from '../calendar/cache';
 import type { Command } from '../types';
 
@@ -114,11 +114,12 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
     });
   }
 
+  invalidateEventCache();
   await rebuildCache(interaction.client);
 
   try {
     const channel = await interaction.client.channels.fetch(process.env.CALENDAR_CHANNEL_ID!);
-    if (interaction.client.pinnedMessageId && channel?.isTextBased()) {
+    if (interaction.client.pinnedMessageId && channel?.isSendable()) {
       const msg = await channel.messages.fetch(interaction.client.pinnedMessageId);
       await msg.edit(getCurrentMonthPayload());
     }

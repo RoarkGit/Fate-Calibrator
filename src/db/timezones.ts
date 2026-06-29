@@ -4,7 +4,7 @@ import path from 'path';
 import type { CalendarEvent, EventType, StorableEvent } from '../types';
 
 const DATA_DIR = process.env.DATA_DIR ?? process.cwd();
-const DB_PATH = path.join(DATA_DIR, 'timezones.db');
+const DB_PATH = path.join(DATA_DIR, 'bot.db');
 
 let db: Database.Database;
 
