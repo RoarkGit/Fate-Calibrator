@@ -14,7 +14,7 @@ RUN pnpm build
 # ---- Runtime stage: same Alpine base so native .node binaries are ABI-compatible ----
 FROM node:22-alpine AS runtime
 
-RUN apk add --no-cache pixman cairo pango jpeg giflib
+RUN apk add --no-cache pixman cairo pango jpeg giflib ttf-dejavu
 
 WORKDIR /app
 # Copy compiled JS and node_modules (which includes the compiled native .node files)
