@@ -79,13 +79,12 @@ export function get(yearMonth: string, tz: string): Buffer | null {
 export function buildNavComponents(
   year: number,
   month1: number,
-  middleLabel = 'Show in my timezone',
-  tzView = false,
+  view: 'server' | 'user' = 'server',
 ): ActionRowBuilder<ButtonBuilder>[] {
   const prev = new Date(year, month1 - 2, 1);
   const next = new Date(year, month1, 1);
   const thisKey = monthKey(year, month1 - 1);
-  const p = tzView ? 'tz' : 'nav';
+  const p = view === 'user' ? 'tz' : 'nav';
 
   return [
     new ActionRowBuilder<ButtonBuilder>().addComponents(
@@ -94,8 +93,8 @@ export function buildNavComponents(
         .setLabel('◀  Prev')
         .setStyle(ButtonStyle.Secondary),
       new ButtonBuilder()
-        .setCustomId(`tz:${thisKey}`)
-        .setLabel(middleLabel)
+        .setCustomId(view === 'user' ? `set_tz:${thisKey}` : `tz:${thisKey}`)
+        .setLabel(view === 'user' ? 'Set My Timezone' : 'My Timezone')
         .setStyle(ButtonStyle.Primary),
       new ButtonBuilder()
         .setCustomId(`${p}:${monthKey(next.getFullYear(), next.getMonth())}`)
