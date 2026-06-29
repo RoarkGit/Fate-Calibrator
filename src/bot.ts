@@ -181,8 +181,7 @@ async function ensurePinnedMessage(client: Client): Promise<void> {
   if (!channel?.isSendable()) throw new Error('CALENDAR_CHANNEL_ID is not a sendable channel');
 
   const pins = await channel.messages.fetchPins();
-  const pinsArr = Array.isArray(pins) ? pins : Object.values(pins);
-  const existing = pinsArr.find((m) => m?.author?.id === client.user?.id);
+  const existing = [...pins.values()].find((m) => m.author.id === client.user?.id);
 
   await cleanupChannel(channel, client.user?.id ?? '', existing?.id ?? null);
 
