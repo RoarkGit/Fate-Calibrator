@@ -4,5 +4,4 @@ dist/
 *.db
 *.db-journal
 *.log
-raid-calendar-bot-plan.md
 package-lock.json

@@ -4,5 +4,3 @@ dist/
 *.db
 .git/
 *.log
-raid-calendar-bot-plan.md
-deploy-commands.js
