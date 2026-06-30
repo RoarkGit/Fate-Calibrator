@@ -4,7 +4,6 @@ import {
   Events,
   GatewayIntentBits,
   GuildScheduledEventStatus,
-  Message,
   REST,
   Routes,
 } from 'discord.js';
@@ -181,14 +180,10 @@ async function ensurePinnedMessage(client: Client): Promise<void> {
   // isSendable() narrows to channels that have send() (excludes PartialGroupDMChannel)
   if (!channel?.isSendable()) throw new Error('CALENDAR_CHANNEL_ID is not a sendable channel');
 
-  const pinsRaw = await channel.messages.fetchPins();
-  const pinsArr: Message[] =
-    pinsRaw instanceof Map
-      ? [...(pinsRaw as Map<string, Message>).values()]
-      : Array.isArray(pinsRaw)
-        ? (pinsRaw as Message[])
-        : Object.values(pinsRaw as unknown as Record<string, Message>);
-  const existing = pinsArr.find((m) => m?.author?.id === client.user?.id);
+  // fetchPins() returns { hasMore, items: MessagePin[] }, where each item wraps
+  // the actual message as `.message` (not a Collection/array of Message itself).
+  const { items } = await channel.messages.fetchPins();
+  const existing = items.find((pin) => pin.message.author?.id === client.user?.id)?.message;
 
   await cleanupChannel(channel, client.user?.id ?? '', existing?.id ?? null);
 
