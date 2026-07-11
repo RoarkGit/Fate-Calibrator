@@ -77,6 +77,14 @@ export function storeCancelledEvent(event: StorableEvent): void {
   storeEventHistory(event, 'cancelled');
 }
 
+export function hasEventHistoryEntry(id: string): boolean {
+  return db.prepare('SELECT 1 FROM event_history WHERE id = ?').get(id) !== undefined;
+}
+
+export function deleteEventHistoryEntry(id: string): boolean {
+  return db.prepare('DELETE FROM event_history WHERE id = ?').run(id).changes > 0;
+}
+
 export function getEventHistory(): CalendarEvent[] {
   const cutoff = Date.now() - 90 * 24 * 60 * 60 * 1000;
   return (db.prepare('SELECT * FROM event_history WHERE scheduled_start_at > ?').all(cutoff) as EventRow[]).map(

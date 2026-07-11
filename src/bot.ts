@@ -7,13 +7,14 @@ import {
   REST,
   Routes,
 } from 'discord.js';
-import { initDb, storeCancelledEvent, storeEventHistory } from './db/timezones';
+import { initDb, storeCancelledEvent, storeEventHistory, hasEventHistoryEntry } from './db/timezones';
 import { rebuildCache, getCurrentMonthPayload } from './calendar/cache';
 import { invalidateEventCache } from './calendar/events';
 import { handleInteraction } from './interactions/buttons';
 import { startScheduler } from './scheduler';
 import timezoneCmd from './commands/timezone';
 import cancelCmd from './commands/cancel';
+import purgeEntryCmd from './commands/purge-entry';
 import './types';
 
 function toServerDateStr(date: Date): string {
@@ -40,6 +41,7 @@ export async function startBot(): Promise<void> {
   client.commands = new Collection();
   client.commands.set(timezoneCmd.data.name, timezoneCmd);
   client.commands.set(cancelCmd.data.name, cancelCmd);
+  client.commands.set(purgeEntryCmd.data.name, purgeEntryCmd);
 
   client.once(Events.ClientReady, async (c) => {
     console.log(`Logged in as ${c.user.tag}`);
@@ -101,8 +103,11 @@ export async function startBot(): Promise<void> {
       const wasComplete = Date.now() >= oldEvent.scheduledStartAt.getTime();
       // PartialGuildScheduledEvent.name is string | null; fall back to ID if somehow null.
       const eventName = oldEvent.name ?? oldEvent.id;
+      const alreadyCancelled = hasEventHistoryEntry(`cancelled:${oldEvent.id}:${dateStr}`);
 
-      if (wasComplete) {
+      if (wasComplete && alreadyCancelled) {
+        console.log(`Skipping occurrence capture for ${eventName} on ${dateStr}: already marked cancelled`);
+      } else if (wasComplete) {
         storeEventHistory(
           {
             id: `occurred:${oldEvent.id}:${dateStr}`,
