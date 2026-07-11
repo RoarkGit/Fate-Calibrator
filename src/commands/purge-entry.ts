@@ -8,11 +8,11 @@ import { invalidateEventCache, getLocalDateParts } from '../calendar/events';
 import { rebuildCache, getCurrentMonthPayload } from '../calendar/cache';
 import type { Command } from '../types';
 
-const LEADS_ROLE_NAME = 'Leads';
+const LEADS_ROLE_NAME = 'Lead';
 
 export const data = new SlashCommandBuilder()
   .setName('purge-entry')
-  .setDescription('[Leads] Delete an accidental duplicate/erroneous calendar history entry and reprint the calendar')
+  .setDescription('[Lead] Delete an accidental duplicate/erroneous calendar history entry and reprint the calendar')
   .addStringOption((opt) =>
     opt
       .setName('entry_id')
