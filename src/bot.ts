@@ -86,13 +86,29 @@ export async function startBot(): Promise<void> {
     invalidateEventCache();
 
     if (newEvent.status === GuildScheduledEventStatus.Canceled) {
-      storeCancelledEvent({
-        id: newEvent.id,
-        name: newEvent.name,
-        scheduledStartAt: newEvent.scheduledStartAt,
-        scheduledEndAt: newEvent.scheduledEndAt,
-      });
-      console.log(`Captured cancellation: ${newEvent.name}`);
+      if (newEvent.recurrenceRule && oldEvent?.scheduledStartAt) {
+        // Discord's event object is shared across the whole series - status flips to
+        // Canceled to reflect the *current* occurrence being skipped, not the series
+        // ending. Key the history row to that occurrence's date (from oldEvent, before
+        // Discord rolls the pointer forward), matching the cancelled:id:date convention
+        // used everywhere else, so only that one occurrence is marked cancelled.
+        const dateStr = toServerDateStr(oldEvent.scheduledStartAt);
+        storeCancelledEvent({
+          id: `cancelled:${newEvent.id}:${dateStr}`,
+          name: newEvent.name ?? oldEvent.name ?? newEvent.id,
+          scheduledStartAt: oldEvent.scheduledStartAt,
+          scheduledEndAt: oldEvent.scheduledEndAt,
+        });
+        console.log(`Captured cancellation: ${newEvent.name} on ${dateStr}`);
+      } else {
+        storeCancelledEvent({
+          id: newEvent.id,
+          name: newEvent.name,
+          scheduledStartAt: newEvent.scheduledStartAt,
+          scheduledEndAt: newEvent.scheduledEndAt,
+        });
+        console.log(`Captured cancellation: ${newEvent.name}`);
+      }
     } else if (
       oldEvent?.recurrenceRule &&
       oldEvent.scheduledStartAt &&

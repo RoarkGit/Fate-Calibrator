@@ -73,6 +73,12 @@ export function expandEvent(event: CalendarEvent, rangeEnd: Date): CalendarEvent
   while (cur <= effectiveEnd) {
     occurrences.push({
       ...event,
+      // Discord exposes one event object per recurring series, whose top-level
+      // status/type reflects only the current occurrence. Never let that leak
+      // onto other generated occurrences - per-occurrence cancellation is applied
+      // afterward in expandAllEvents via date-keyed history markers.
+      type: 'regular',
+      status: GuildScheduledEventStatus.Scheduled,
       scheduledStartAt: new Date(cur),
       scheduledEndAt: duration > 0 ? new Date(cur.getTime() + duration) : null,
     });
