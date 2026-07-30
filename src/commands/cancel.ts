@@ -1,5 +1,6 @@
 import {
   SlashCommandBuilder,
+  GuildScheduledEventStatus,
   type AutocompleteInteraction,
   type ChatInputCommandInteraction,
 } from 'discord.js';
@@ -64,6 +65,11 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
     return;
   }
 
+  // Discord's API only ever exposes one occurrence per recurring series (the current/next
+  // one), so it can only be asked to cancel that occurrence unambiguously. Anything further
+  // out is calendar-only; the Lead still has to cancel it in Discord's own event UI directly.
+  let isCurrentOccurrence = true;
+
   if (liveEvent.recurrenceRule) {
     if (!dateStr) {
       await interaction.editReply({
@@ -99,6 +105,9 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
       return;
     }
 
+    isCurrentOccurrence =
+      liveEvent.scheduledStartAt != null && match.scheduledStartAt?.getTime() === liveEvent.scheduledStartAt.getTime();
+
     storeCancelledEvent({
       id: `cancelled:${eventId}:${dateStr}`,
       name: liveEvent.name,
@@ -112,6 +121,17 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
       scheduledStartAt: liveEvent.scheduledStartAt,
       scheduledEndAt: liveEvent.scheduledEndAt,
     });
+  }
+
+  let discordCancelFailed = false;
+  if (isCurrentOccurrence) {
+    try {
+      const guild = await interaction.client.guilds.fetch(process.env.GUILD_ID!);
+      await guild.scheduledEvents.edit(eventId, { status: GuildScheduledEventStatus.Canceled });
+    } catch (err) {
+      discordCancelFailed = true;
+      console.error('Failed to cancel event via Discord API:', err);
+    }
   }
 
   invalidateEventCache();
@@ -128,8 +148,16 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
   }
 
   const dateDisplay = dateStr ? ` on ${dateStr}` : '';
+  let note = '';
+  if (!isCurrentOccurrence) {
+    note =
+      ' This is a future occurrence, so Discord\'s API can\'t cancel it there directly - use "Cancel this Event" in the event\'s series list in Discord too if you want members notified.';
+  } else if (discordCancelFailed) {
+    note = ' Could not cancel the Discord event itself (check bot permissions/logs) - only the calendar was updated.';
+  }
+
   await interaction.editReply({
-    content: `Marked **${liveEvent.name}**${dateDisplay} as cancelled on the calendar.`,
+    content: `Marked **${liveEvent.name}**${dateDisplay} as cancelled on the calendar.${note}`,
   });
 }
 

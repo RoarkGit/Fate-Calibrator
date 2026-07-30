@@ -7,7 +7,7 @@ import {
   REST,
   Routes,
 } from 'discord.js';
-import { initDb, storeCancelledEvent, storeEventHistory, hasEventHistoryEntry } from './db/timezones';
+import { initDb, storeEventHistory, hasEventHistoryEntry } from './db/timezones';
 import { rebuildCache, getCurrentMonthPayload } from './calendar/cache';
 import { invalidateEventCache } from './calendar/events';
 import { handleInteraction } from './interactions/buttons';
@@ -85,31 +85,12 @@ export async function startBot(): Promise<void> {
     if (newEvent.guildId !== process.env.GUILD_ID) return;
     invalidateEventCache();
 
-    if (newEvent.status === GuildScheduledEventStatus.Canceled) {
-      if (newEvent.recurrenceRule && oldEvent?.scheduledStartAt) {
-        // Discord's event object is shared across the whole series - status flips to
-        // Canceled to reflect the *current* occurrence being skipped, not the series
-        // ending. Key the history row to that occurrence's date (from oldEvent, before
-        // Discord rolls the pointer forward), matching the cancelled:id:date convention
-        // used everywhere else, so only that one occurrence is marked cancelled.
-        const dateStr = toServerDateStr(oldEvent.scheduledStartAt);
-        storeCancelledEvent({
-          id: `cancelled:${newEvent.id}:${dateStr}`,
-          name: newEvent.name ?? oldEvent.name ?? newEvent.id,
-          scheduledStartAt: oldEvent.scheduledStartAt,
-          scheduledEndAt: oldEvent.scheduledEndAt,
-        });
-        console.log(`Captured cancellation: ${newEvent.name} on ${dateStr}`);
-      } else {
-        storeCancelledEvent({
-          id: newEvent.id,
-          name: newEvent.name,
-          scheduledStartAt: newEvent.scheduledStartAt,
-          scheduledEndAt: newEvent.scheduledEndAt,
-        });
-        console.log(`Captured cancellation: ${newEvent.name}`);
-      }
-    } else if (
+    // Cancellations are no longer inferred from Discord's own gateway events here - Discord's
+    // Bot API only ever exposes one occurrence per recurring series (the current one), so it
+    // can't reliably tell us which date a native "Cancel this Event" actually targeted. /cancel
+    // is the sole path for recording a cancellation now, and it mirrors to the real Discord
+    // event itself when the target is unambiguous (see commands/cancel.ts).
+    if (
       oldEvent?.recurrenceRule &&
       oldEvent.scheduledStartAt &&
       newEvent.scheduledStartAt &&
@@ -134,14 +115,6 @@ export async function startBot(): Promise<void> {
           'regular',
         );
         console.log(`Captured occurrence: ${eventName} on ${dateStr}`);
-      } else {
-        storeCancelledEvent({
-          id: `cancelled:${oldEvent.id}:${dateStr}`,
-          name: eventName,
-          scheduledStartAt: oldEvent.scheduledStartAt,
-          scheduledEndAt: oldEvent.scheduledEndAt,
-        });
-        console.log(`Captured occurrence skip: ${eventName} on ${dateStr}`);
       }
     } else if (newEvent.status === GuildScheduledEventStatus.Completed && !newEvent.recurrenceRule) {
       storeEventHistory(
@@ -164,7 +137,6 @@ export async function startBot(): Promise<void> {
     invalidateEventCache();
 
     const isCompleted = event.status === GuildScheduledEventStatus.Completed;
-    const isFuture = event.scheduledStartAt != null && event.scheduledStartAt > new Date();
 
     const eventName = event.name ?? event.id;
     if (isCompleted && !event.recurrenceRule) {
@@ -178,17 +150,9 @@ export async function startBot(): Promise<void> {
         'adhoc',
       );
       console.log(`Captured ad-hoc completion (delete): ${eventName}`);
-    } else if (isFuture && !isCompleted) {
-      const dateStr = toServerDateStr(event.scheduledStartAt!);
-      const cancelId = event.recurrenceRule ? `cancelled:${event.id}:${dateStr}` : event.id;
-      storeCancelledEvent({
-        id: cancelId,
-        name: eventName,
-        scheduledStartAt: event.scheduledStartAt,
-        scheduledEndAt: event.scheduledEndAt,
-      });
-      console.log(`Captured deletion as cancellation: ${eventName} on ${dateStr}`);
     }
+    // Deletion of a future/unstarted event is no longer inferred as a cancellation here, for the
+    // same reason as GuildScheduledEventUpdate above - /cancel is the sole recorded path now.
 
     await rebuildAndUpdate(client).catch(console.error);
   });
