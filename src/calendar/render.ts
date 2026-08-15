@@ -1,4 +1,5 @@
 import { createCanvas, type SKRSContext2D } from '@napi-rs/canvas';
+import { FONT_FAMILY } from './fonts';
 import { getLocalDateParts } from './events';
 import type { CalendarEvent, EventType } from '../types';
 
@@ -135,11 +136,11 @@ function drawHeader(ctx: SKRSContext2D, year: number, month: number): void {
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillStyle = COLORS.titleText;
-  ctx.font = 'bold 20px sans-serif';
+  ctx.font = `bold 20px ${FONT_FAMILY}`;
   ctx.fillText(`${MONTH_NAMES[month]} ${year}`, WIDTH / 2, TITLE_H / 2);
 
   ctx.fillStyle = COLORS.dayHeader;
-  ctx.font = '12px sans-serif';
+  ctx.font = `12px ${FONT_FAMILY}`;
   DAY_NAMES.forEach((name, i) => {
     ctx.fillText(name, i * CELL_W + CELL_W / 2, TITLE_H + DAY_H / 2);
   });
@@ -174,12 +175,12 @@ function drawPill(
   ctx.textBaseline = 'middle';
   const midY = y + PILL_H / 2;
 
-  ctx.font = '10px sans-serif';
+  ctx.font = `10px ${FONT_FAMILY}`;
   const timeW = ctx.measureText(timeStr).width;
   ctx.fillText(timeStr, x + w - CELL_PAD - timeW, midY);
 
   const nameMaxW = w - CELL_PAD * 2 - timeW - 6;
-  ctx.font = 'bold 11px sans-serif';
+  ctx.font = `bold 11px ${FONT_FAMILY}`;
   const name = truncateText(ctx, event.name, nameMaxW);
   ctx.fillText(name, x + CELL_PAD, midY);
 
@@ -224,7 +225,7 @@ function drawCell(
   // Circle is drawn behind the text at the same vertical position as non-today dates
   // (textBaseline='top', y+CELL_PAD) so there is no vertical displacement.
   const dateStr = String(day);
-  ctx.font = 'bold 13px sans-serif';
+  ctx.font = `bold 13px ${FONT_FAMILY}`;
   if (isToday) {
     const cx = x + CELL_PAD + TODAY_R;
     const cy = y + CELL_PAD + 6;
@@ -260,7 +261,7 @@ function drawCell(
   if (cellEvents.length > MAX_PILLS) {
     ctx.globalAlpha = !inMonth ? 0.35 : 1;
     ctx.fillStyle = COLORS.legendText;
-    ctx.font = '10px sans-serif';
+    ctx.font = `10px ${FONT_FAMILY}`;
     ctx.textAlign = 'left';
     ctx.textBaseline = 'top';
     ctx.fillText(`+${cellEvents.length - MAX_PILLS} more`, x + CELL_PAD, pillsY + MAX_PILLS * (PILL_H + PILL_GAP));
@@ -305,7 +306,7 @@ function drawLegend(ctx: SKRSContext2D): void {
     }
 
     ctx.fillStyle = COLORS.legendText;
-    ctx.font = '12px sans-serif';
+    ctx.font = `12px ${FONT_FAMILY}`;
     ctx.textAlign = 'left';
     ctx.fillText(label, lx + swatchW + gap, ly);
     lx += spacing;
