@@ -3,6 +3,7 @@ import { FONT_FAMILY } from './fonts';
 import { getLocalDateParts } from './events';
 import type { CalendarEvent, EventType } from '../types';
 
+const RENDER_SCALE = 2;
 const WIDTH = 1400;
 const CELL_W = 200;
 const TITLE_H = 36;
@@ -345,8 +346,9 @@ export function renderMonth(
   timezone: string,
   today = new Date(),
 ): Buffer {
-  const canvas = createCanvas(WIDTH, HEIGHT);
+  const canvas = createCanvas(WIDTH * RENDER_SCALE, HEIGHT * RENDER_SCALE);
   const ctx = canvas.getContext('2d');
+  ctx.scale(RENDER_SCALE, RENDER_SCALE);
 
   ctx.fillStyle = COLORS.bg;
   ctx.fillRect(0, 0, WIDTH, HEIGHT);
